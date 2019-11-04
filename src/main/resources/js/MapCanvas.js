@@ -30,7 +30,7 @@ MapCanvas.prototype.init = function() {
   var xDwn = 0;
   var yDwn = 0;
 //add initial center
-  var xyzCenter = this.startXYZ;//new XYZ(0, 0, 0);
+  var xyzCenter = this.startXYZ;
 //map frame
   var mapFrame = new MapFrame(xyzCenter, this.radiusOfReloading);
 //add list of objects
@@ -54,7 +54,6 @@ MapCanvas.prototype.init = function() {
     document.body.appendChild(container);
 
     camera = new THREE.PerspectiveCamera(45, W / H, 1, 10000);
-    // initial position should be 0,0,0
     camera.position.z = 20;
     var cameraControll =  prepareCameraControll(camera);
     cameraControll.add(camera);
@@ -75,11 +74,10 @@ MapCanvas.prototype.init = function() {
     scene.add( light3 );
     var render = new THREE.WebGLRenderer();
     render.setSize(W, H);
-render.autoClear=false;
+    render.autoClear=false;
     container.appendChild(render.domElement);
     init(cameraControll, scene);
-//TODO find out if it is a appropriate coordinates
-    getObjectsListOnMap(this.startXYZ.x, this.startXYZ.z, this.startXYZ.y)//(1,1,1);
+    getObjectsListOnMap(this.startXYZ.x, this.startXYZ.z, this.startXYZ.y);
     animate();
 
 //current function return prepared camera controll
@@ -120,24 +118,24 @@ function prepareCameraControll(camera) {
     cameraControll.add(downwardSprite);
     return cameraControll;
 }
-//TODO implement translation
-function loadOBJ(name, x, y, fiZ){
+
+function loadOBJ(name, z, x, y, fiY){
   var manager = new THREE.LoadingManager();
-  //load mtl
   var mtlLoader = new THREE.MTLLoader( manager );
   mtlLoader.load(SERVER_IP + '/map/material/' + name, function(materials){
         materials.preload();
        var loader = new THREE.OBJLoader( manager );
        loader.setMaterials(materials);
        loader.load(SERVER_IP + '/map/object/' + name, function ( object ) {
-           object.name = name + '_' + x + '_' +y;
+           object.name = name + '_' + z + '_' + x;
            scene.add( object );   
-           selectedObject = scene.getObjectByName(name + '_' + x + '_' +y);
-           selectedObject.rotateOnAxis( Y_AXIS, fiZ );
-           xyz = new XYZ(x, y, 0);
-           newXYZ = xyz.getRotatedCoordinates(fiZ);
-           selectedObject.translateZ(newXYZ.y);
+           selectedObject = scene.getObjectByName(name + '_' + z + '_' + x);
+           selectedObject.rotateOnAxis( Y_AXIS, fiY );
+           xyz = new XYZ(x, y, z);
+           newXYZ = xyz.getRotatedCoordinates(fiY);
+           selectedObject.translateZ(newXYZ.z);
            selectedObject.translateX(newXYZ.x);
+           selectedObject.translateY(newXYZ.y);
            animate();     
        });
  });
@@ -257,7 +255,7 @@ function init(camera, scene){
               objectOnMap = objectsList.getObject();
               //check if the object has been allready loaded
               if (objectsListOnScene.includes(objectOnMap.name + '_' + objectOnMap.latitude + '_' + objectOnMap.longitude) == false){
-                  loadOBJ(objectOnMap.name, objectOnMap.latitude, objectOnMap.longitude, objectOnMap.alphaZ);
+                  loadOBJ(objectOnMap.name, objectOnMap.latitude, objectOnMap.longitude, objectOnMap.hight, objectOnMap.alphaZ);
                   // add loaded object to the list
                   objectsListOnScene.push(objectOnMap.name + '_' + objectOnMap.latitude + '_' + objectOnMap.longitude);
               }
