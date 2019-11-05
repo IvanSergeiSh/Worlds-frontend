@@ -7,7 +7,7 @@
 
 	<groupId>com.gmail.ivansergeish</groupId>
 	<artifactId>worlds-front-end</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.0.alpha-RELEASE</version>
 	<name>web-viewer</name>
 	<packaging>jar</packaging>
 </project>
