@@ -1,0 +1,11 @@
+This project is a part of Worlds-project 
+  see github: https://github.com/Aleksey-S-58/Worlds-tools.git
+The project is intended to provide visualisation of 3DMap via browser.
+It includes communication with back-end 
+(see https://github.com/Aleksey-S-58/Worlds-tools.git)
+ and quering all necessary information.
+To visualise 3DO's we are using ThreeJS library see: https://github.com/mrdoob/three.js/
+You can find an example of usage of this project
+ counteracting with back-end in Launcher project
+  (see https://github.com/IvanSergeiSh/Worlds-Launcher.git)   
+ We are also using jQuerry library to request information from a back-end.
