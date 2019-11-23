@@ -142,6 +142,23 @@ function loadOBJ(name, z, x, y, fiY){
 
 };
 
+//z - axe direction is toward you from monitor = latitude
+//x- to the right in plane of monitor  = longetude
+//y - upright in plane of the monitor = height
+function loadSprite(name, latitude, longitude, hight) {
+    textureLoader = new THREE.TextureLoader();
+    //var forwardSprite = new THREE.Sprite(forwardMaterialSprite);
+    currentSpriteTexture = textureLoader.load(SERVER_IP + '/map/sprite/' + name);
+    currentMaterialSprite = new THREE.SpriteMaterial({
+        map:currentSpriteTexture, color : 0xffffff ,fog:true
+    });
+    currentSprite = new THREE.Sprite(currentMaterialSprite);
+    currentSprite.position.set(longitude, hight, latitude);
+    currentSprite.name = name + '_' + latitude + '_' + longitude;
+    scene.add(currentSprite);
+    animate();
+}
+
 function addSun(){
     // Sun
     var sun, sun_geom, sun_mat;
@@ -255,7 +272,12 @@ function init(camera, scene){
               objectOnMap = objectsList.getObject();
               //check if the object has been allready loaded
               if (objectsListOnScene.includes(objectOnMap.name + '_' + objectOnMap.latitude + '_' + objectOnMap.longitude) == false){
-                  loadOBJ(objectOnMap.name, objectOnMap.latitude, objectOnMap.longitude, objectOnMap.hight, objectOnMap.alphaZ);
+                  if (objectOnMap.type =='SPRITE') {
+                      loadSprite(objectOnMap.name, objectOnMap.latitude, objectOnMap.longitude, objectOnMap.hight);
+                  } else {
+                      loadOBJ(objectOnMap.name, objectOnMap.latitude, objectOnMap.longitude, objectOnMap.hight, objectOnMap.alphaZ);
+                  }
+                  
                   // add loaded object to the list
                   objectsListOnScene.push(objectOnMap.name + '_' + objectOnMap.latitude + '_' + objectOnMap.longitude);
               }
