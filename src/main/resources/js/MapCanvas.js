@@ -155,6 +155,7 @@ function loadSprite(name, latitude, longitude, hight) {
     currentSprite = new THREE.Sprite(currentMaterialSprite);
     currentSprite.position.set(longitude, hight, latitude);
     currentSprite.name = name + '_' + latitude + '_' + longitude;
+    //sprite.scale.set(100,100,1);
     scene.add(currentSprite);
     animate();
 }
@@ -242,12 +243,14 @@ function init(camera, scene){
         currentPosition = new XYZ(camera.position.x, camera.position.y, camera.position.z);
         if(mapFrame.checkToReload(currentPosition)) {
             getObjectsListOnMap(currentPosition.x, currentPosition.z, currentPosition.y);
-            xyzCenter.x = camera.position.x;
-            xyzCenter.y = camera.position.y;
-            xyzCenter.z = camera.position.z;
+            resetCenterPosition(cameraControll);
         }
    }
-
+  function resetCenterPosition(cameraControll) {
+            xyzCenter.x = cameraControll.position.x;
+            xyzCenter.y = cameraControll.position.y;
+            xyzCenter.z = cameraControll.position.z;
+  }
 // calculate module of translation in current direction
   function calcTranslation(aX) {
         var d = new Date();
@@ -320,20 +323,32 @@ function init(camera, scene){
   function checkForNavigationButtonPressed(x, y, wW, wH) {
       if (x/wW > 216 / 536 && x/wW < 338 / 536 && y/wH > 390 / 672 && y/wH < 483 / 672) {
           cameraControll.translateZ(-1 * scale);
-          animate();
+          //animate();
       }
       if (x/wW > 216 / 536 && x/wW < 338 / 536 && y/wH > 520 / 672 && y/wH < 648 / 672) {
           cameraControll.translateZ(1 * scale);
-          animate();
+          //animate();
       }
       if (x/wW > 400 / 536 && x/wW < 480 / 536 && y/wH > 290 / 672 && y/wH < 383 / 672) {
-          cameraControll.translateY(1 * scale);
-          animate();
+          if (validateHeight(1 * scale)) {
+              cameraControll.translateY(1 * scale);
+          }
+
+          //animate();
       }
       if (x/wW > 400 / 536 && x/wW < 480 / 536 && y/wH > 400 / 672 && y/wH < 528 / 672) {
-          cameraControll.translateY(-1 * scale);
-          animate();
+          if (validateHeight(-1 * scale)) {
+              cameraControll.translateY(-1 * scale);
+          }
+          //animate();
       }
+  }
+
+  function validateHeight(delta) {
+      if(cameraControll.position.y + delta > 0) {
+          return true;
+      }
+      return false;
   }
 
   function startTrack(event) {
@@ -349,28 +364,19 @@ function init(camera, scene){
 //new version cameraControll
       cameraControll.rotateOnAxis( Y_AXIS, angle );
       cameraControll.translateZ(-delta);
-      animate();
+      //animate();
       checkForReload();
   }
-
+//TODO here we are checking for reloading and if ok move xyzCenter
   function checkForReload(){
-        //currentPosition = new XYZ(camera.position.x, camera.position.y, camera.position.z);
+        //TODO check if it is a good practice to create a new object each time!!!!
         currentPosition = new XYZ(cameraControll.position.x, cameraControll.position.y, cameraControll.position.z);
         if(mapFrame.checkToReload(currentPosition)) {
 
             getObjectsListOnMap(currentPosition.x, currentPosition.z, currentPosition.y);
-            // camera.x - has been changed to cameraControll.position.x
-            xyzCenter.x = cameraControll.position.x;
-            xyzCenter.y = cameraControll.position.y;
-            xyzCenter.z = cameraControll.position.z;
+            resetCenterPosition(cameraControll);
         }        
         currentPosition = new XYZ(cameraControll.position.x, cameraControll.position.y, cameraControll.position.z);
-        //if(mapFrame.checkToReload(currentPosition)) {
-        //    getObjectsListOnMap(currentPosition.x, currentPosition.z, currentPosition.y);
-        //    xyzCenter.x = cameraControll.position.x;
-        //    xyzCenter.y = cameraControll.position.y;
-        //    xyzCenter.z = cameraControll.position.z;
-        //}
   }
 
 
