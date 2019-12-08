@@ -330,13 +330,25 @@ function init(camera, scene){
           //animate();
       }
       if (x/wW > 400 / 536 && x/wW < 480 / 536 && y/wH > 290 / 672 && y/wH < 383 / 672) {
-          cameraControll.translateY(1 * scale);
+          if (validateHeight(1 * scale)) {
+              cameraControll.translateY(1 * scale);
+          }
+
           //animate();
       }
       if (x/wW > 400 / 536 && x/wW < 480 / 536 && y/wH > 400 / 672 && y/wH < 528 / 672) {
-          cameraControll.translateY(-1 * scale);
+          if (validateHeight(-1 * scale)) {
+              cameraControll.translateY(-1 * scale);
+          }
           //animate();
       }
+  }
+
+  function validateHeight(delta) {
+      if(cameraControll.position.y + delta > 0) {
+          return true;
+      }
+      return false;
   }
 
   function startTrack(event) {
