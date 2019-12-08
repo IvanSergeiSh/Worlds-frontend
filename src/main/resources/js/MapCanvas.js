@@ -155,6 +155,7 @@ function loadSprite(name, latitude, longitude, hight) {
     currentSprite = new THREE.Sprite(currentMaterialSprite);
     currentSprite.position.set(longitude, hight, latitude);
     currentSprite.name = name + '_' + latitude + '_' + longitude;
+    sprite.scale.set(100,100,1);
     scene.add(currentSprite);
     animate();
 }
@@ -352,7 +353,7 @@ function init(camera, scene){
       animate();
       checkForReload();
   }
-
+//TODO add 
   function checkForReload(){
         //currentPosition = new XYZ(camera.position.x, camera.position.y, camera.position.z);
         currentPosition = new XYZ(cameraControll.position.x, cameraControll.position.y, cameraControll.position.z);
