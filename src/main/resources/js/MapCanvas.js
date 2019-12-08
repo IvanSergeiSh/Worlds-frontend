@@ -323,19 +323,19 @@ function init(camera, scene){
   function checkForNavigationButtonPressed(x, y, wW, wH) {
       if (x/wW > 216 / 536 && x/wW < 338 / 536 && y/wH > 390 / 672 && y/wH < 483 / 672) {
           cameraControll.translateZ(-1 * scale);
-          animate();
+          //animate();
       }
       if (x/wW > 216 / 536 && x/wW < 338 / 536 && y/wH > 520 / 672 && y/wH < 648 / 672) {
           cameraControll.translateZ(1 * scale);
-          animate();
+          //animate();
       }
       if (x/wW > 400 / 536 && x/wW < 480 / 536 && y/wH > 290 / 672 && y/wH < 383 / 672) {
           cameraControll.translateY(1 * scale);
-          animate();
+          //animate();
       }
       if (x/wW > 400 / 536 && x/wW < 480 / 536 && y/wH > 400 / 672 && y/wH < 528 / 672) {
           cameraControll.translateY(-1 * scale);
-          animate();
+          //animate();
       }
   }
 
@@ -352,7 +352,7 @@ function init(camera, scene){
 //new version cameraControll
       cameraControll.rotateOnAxis( Y_AXIS, angle );
       cameraControll.translateZ(-delta);
-      animate();
+      //animate();
       checkForReload();
   }
 //TODO here we are checking for reloading and if ok move xyzCenter
