@@ -63,7 +63,12 @@ MapCanvas.prototype.init = function() {
     var light1 = new THREE.DirectionalLight( 0xafffff, 1 );
     var light2 = new THREE.DirectionalLight( 0xafffff, 1 );
     var light3 = new THREE.DirectionalLight( 0xafffff, 1 );
-    var hemiLight = new THREE.HemisphereLight( 0x0000ff, 0x00ff00, 1 ); 
+            var hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.6 );
+            //hemiLight.color.setHSV( 0.6, 0.75, 0.5 );
+            //hemiLight.groundColor.setHSV( 0.095, 0.5, 0.5 );
+            hemiLight.position.set( 0, 500, 0 );
+            scene.add( hemiLight );
+    //var hemiLight = new THREE.HemisphereLight( 0x0000ff, 0x00ff00, 1 ); 
     light.position.set( 1, 1, 1 ).normalize();
     light1.position.set( 10, 10, -10 ).normalize();
     light2.position.set( 10, -10, -10 ).normalize();
@@ -81,7 +86,7 @@ MapCanvas.prototype.init = function() {
     animate();
 
 //current function return prepared camera controll
-function prepareCameraControll(camera) {
+function prepareCameraControll(camera, scene) {
     var textureLoader = new THREE.TextureLoader();
     var forwardSprite = textureLoader.load(SERVER_IP + "/map/sprite/forward");
     var backwardSprite = textureLoader.load(SERVER_IP + "/map/sprite/backward");
@@ -378,7 +383,10 @@ function init(camera, scene){
         }        
         currentPosition = new XYZ(cameraControll.position.x, cameraControll.position.y, cameraControll.position.z);
   }
-
-
+MapCanvas.prototype.reloadLocatorPosition = function(x,z) {
+            cameraControll.position.x = x;
+            cameraControll.position.z = z;    
+  }
 }
+
 
