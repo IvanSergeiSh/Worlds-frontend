@@ -54,7 +54,8 @@ MapCanvas.prototype.init = function() {
     document.body.appendChild(container);
 
     camera = new THREE.PerspectiveCamera(45, W / H, 1, 10000);
-    camera.position.z = 20;
+//TODO change hardcoded camera.position.z = 20; to the actual value
+    camera.position.z = 0;//startXYZ.z;//20;
     var cameraControll =  prepareCameraControll(camera);
     cameraControll.add(camera);
     scene = new THREE.Scene();
@@ -108,13 +109,13 @@ function prepareCameraControll(camera, scene) {
     var backwardSprite = new THREE.Sprite(backwardMaterialSprite);
     var upwardSprite = new THREE.Sprite(upwardMaterialSprite);
     var downwardSprite = new THREE.Sprite(downwardMaterialSprite);
-    forwardSprite.position.set(startXYZ.x + 0, startXYZ.y - 0.5, startXYZ.z + 15);
+    forwardSprite.position.set(startXYZ.x + 0, startXYZ.y - 0.5, startXYZ.z + 0);// + 20 + 15);
     forwardSprite.name = 'forwardSprite';
-    backwardSprite.position.set(startXYZ.x + 0, startXYZ.y - 1.5, startXYZ.z + 15);
+    backwardSprite.position.set(startXYZ.x + 0, startXYZ.y - 1.5, startXYZ.z + 0);//20 + 15);
     backwardSprite.name = 'backwardSprite';
-    upwardSprite.position.set(startXYZ.x + 3, startXYZ.y + 0, startXYZ.z + 15);
+    upwardSprite.position.set(startXYZ.x + 3, startXYZ.y + 0, startXYZ.z + 0);// 20 +15);
     upwardSprite.name = 'upwardSprite';
-    downwardSprite.position.set(startXYZ.x + 3, startXYZ.y - 1, startXYZ.z + 15);
+    downwardSprite.position.set(startXYZ.x + 3, startXYZ.y - 1, startXYZ.z + 0);// 20 + 15);
     downwardSprite.name = 'downwardSprite';
     cameraControll.add(camera);
     cameraControll.add(forwardSprite);

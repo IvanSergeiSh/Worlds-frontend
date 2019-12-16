@@ -10,7 +10,7 @@ function LocationWatcher(mapCanvas, radiusOfReloading, centerXYZ){
     this.centerXYZ = centerXYZ;
     this.radiusOfReloading = radiusOfReloading;
     this.mapCanvas = mapCanvas;
-    this.transformator = new CoordinatesTransformator(new XYZ(0,0,0), centerXYZ.z, centerXYZ.x, 100000, 100000);
+    this.transformator = new CoordinatesTransformator(new XYZ(-10,1,-1), centerXYZ.z, centerXYZ.x, 10000, 10000);
 }
 LocationWatcher.prototype.checkPosition = function(position) {
     x = this.centerXYZ.x;
