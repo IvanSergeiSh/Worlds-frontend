@@ -7,92 +7,97 @@ function MapCanvas(SERVER_IP, TIME_DELAY, rotationSpeed, scaleOfDisplacement, st
     this.scale = scaleOfDisplacement;
     this.startXYZ = startXYZ;
     this.radiusOfReloading = radiusOfReloading;
+    this.cameraControll = new THREE.Group();
+    this.currentAngle = 0; 
+    var currentDate = new Date();
+    this.currentTimeMils = currentDate.getTime();
+    this.rotationAngleZ = 0;
+    this.Y_AXIS = new THREE.Vector3( 0, 1, 0 );
+    //on mousedown
+    this.xDwn = 0;
+    this.yDwn = 0;
+    //add initial center
+    this.xyzCenter = this.startXYZ;
+//map frame
+  this.mapFrame = new MapFrame(this.xyzCenter, this.radiusOfReloading);
+//add list of objects
+  this.objectsListOnScene = new Array();
+//add raycaster
+  var raycaster = new THREE.Raycaster();
+  var mouse = new THREE.Vector2();
+
+  this.currentSpeed = 0;
+  var url = SERVER_IP;
+  this.scene = new THREE.Scene();
+  this.W = parseInt(window.innerWidth);
+  this.H = parseInt(window.innerHeight);
+  this.camera = new THREE.PerspectiveCamera(45, this.W / this.H, 1, 10000);
+  this.container = document.createElement('div');
+  this.render = new THREE.WebGLRenderer();
+
 }
+
 MapCanvas.prototype.init = function() {
 
 //z - axe direction is toward you from monitor = latitude
 //x- to the right in plane of monitor  = longetude
 //y - upright in plane of the monitor = height
   var SERVER_IP = this.SERVER_IP;
-  var currentDate = new Date();
-  var currentTimeMils = currentDate.getTime();
-  var TIME_DELAY = TIME_DELAY;
-  var rotationAngleZ = 0;
-  var rotationSpeed = this.rotationSpeed;
-  var startXYZ = this.startXYZ;
-  var radiusOfReloading = this.radiusOfReloading;
-  var scale = this.scale;
-  var currentAngle = 0;
-  var Y_AXIS = new THREE.Vector3( 0, 1, 0 );
-  //add group camera + controll
-  var cameraControll = new THREE.Group();
-  //on mousedown
-  var xDwn = 0;
-  var yDwn = 0;
-//add initial center
-  var xyzCenter = this.startXYZ;
-//map frame
-  var mapFrame = new MapFrame(xyzCenter, this.radiusOfReloading);
-//add list of objects
-  var objectsListOnScene = new Array();
-//add raycaster
-  var raycaster = new THREE.Raycaster();
-  var mouse = new THREE.Vector2();
+    this.prepareListeners();
+    document.body.appendChild(this.container);
 
-  var currentSpeed = 0;
-  var url = SERVER_IP;
-    document.addEventListener('mousedown', startTrack);
-    document.addEventListener('mouseup', endTrack);
-    document.addEventListener('pointerdown', startTrack);
-    document.addEventListener('pointerup', endTrack);
-    var scene, camera, render, container, W, H;
-
-    W = parseInt(window.innerWidth);
-    H = parseInt(window.innerHeight);
-
-    container = document.createElement('div');
-    document.body.appendChild(container);
-
-    camera = new THREE.PerspectiveCamera(45, W / H, 1, 10000);
 //TODO change hardcoded camera.position.z = 20; to the actual value
-    camera.position.z = 0;//startXYZ.z;//20;
-    var cameraControll =  prepareCameraControll(camera);
-    cameraControll.add(camera);
-    scene = new THREE.Scene();
-    scene.add(cameraControll);
+    this.camera.position.z = 0;//startXYZ.z;//20;
+    this.cameraControll =  this.prepareCameraControll(this.camera);
+    this.cameraControll.add(this.camera);//
+    this.scene.add(this.cameraControll);//
     var light = new THREE.DirectionalLight( 0xafffff, 1 );
     var light1 = new THREE.DirectionalLight( 0xafffff, 1 );
     var light2 = new THREE.DirectionalLight( 0xafffff, 1 );
     var light3 = new THREE.DirectionalLight( 0xafffff, 1 );
             var hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.6 );
-            //hemiLight.color.setHSV( 0.6, 0.75, 0.5 );
-            //hemiLight.groundColor.setHSV( 0.095, 0.5, 0.5 );
             hemiLight.position.set( 0, 500, 0 );
-            scene.add( hemiLight );
-    //var hemiLight = new THREE.HemisphereLight( 0x0000ff, 0x00ff00, 1 ); 
+            this.scene.add( hemiLight );
     light.position.set( 1, 1, 1 ).normalize();
     light1.position.set( 10, 10, -10 ).normalize();
     light2.position.set( 10, -10, -10 ).normalize();
     light3.position.set( 100, 100, 100 ).normalize();
-    scene.add( light );
-    scene.add( light1 );
-    scene.add( light2 );
-    scene.add( light3 );
-    var render = new THREE.WebGLRenderer();
-    render.setSize(W, H);
-    render.autoClear=false;
-    container.appendChild(render.domElement);
-    init(cameraControll, scene);
-    getObjectsListOnMap(this.startXYZ.x, this.startXYZ.z, this.startXYZ.y);
-    animate();
+    this.scene.add( light );
+    this.scene.add( light1 );
+    this.scene.add( light2 );
+    this.scene.add( light3 );
+    this.render.setSize(this.W, this.H);
+    this.render.autoClear=false;
+    this.container.appendChild(this.render.domElement);
+    //TODO improve and turn on the following function
+    //this.initDeviceOrientationListeners(this.cameraControll, scene);
+    this.getObjectsListOnMap(this.startXYZ.x, this.startXYZ.z, this.startXYZ.y);
+    this.animate();
+}
 
+MapCanvas.prototype.prepareListeners = function() {
+    var objectMapCanvas = this;
+    document.addEventListener('mousedown', function(event){
+      objectMapCanvas.startTrack(event);
+    });
+
+    document.addEventListener('mouseup', function(event){
+      objectMapCanvas.endTrack(event);
+    });
+    document.addEventListener('pointerdown', function(event){
+      objectMapCanvas.startTrack(event);
+    });
+    document.addEventListener('pointerup', function(event){
+      objectMapCanvas.endTrack(event);
+    });
+}
 //current function return prepared camera controll
-function prepareCameraControll(camera, scene) {
+MapCanvas.prototype.prepareCameraControll = function(camera) {
     var textureLoader = new THREE.TextureLoader();
-    var forwardSprite = textureLoader.load(SERVER_IP + "/map/sprite/forward");
-    var backwardSprite = textureLoader.load(SERVER_IP + "/map/sprite/backward");
-    var upwardSprite = textureLoader.load(SERVER_IP + "/map/sprite/upward");
-    var downwardSprite = textureLoader.load(SERVER_IP + "/map/sprite/downward");
+    var forwardSprite = textureLoader.load(this.SERVER_IP + "/map/sprite/forward");
+    var backwardSprite = textureLoader.load(this.SERVER_IP + "/map/sprite/backward");
+    var upwardSprite = textureLoader.load(this.SERVER_IP + "/map/sprite/upward");
+    var downwardSprite = textureLoader.load(this.SERVER_IP + "/map/sprite/downward");
     var forwardMaterialSprite = new THREE.SpriteMaterial({
         map:forwardSprite, color : 0xffffff ,fog:true
     });
@@ -109,40 +114,41 @@ function prepareCameraControll(camera, scene) {
     var backwardSprite = new THREE.Sprite(backwardMaterialSprite);
     var upwardSprite = new THREE.Sprite(upwardMaterialSprite);
     var downwardSprite = new THREE.Sprite(downwardMaterialSprite);
-    forwardSprite.position.set(startXYZ.x + 0, startXYZ.y - 0.5, startXYZ.z + 0);// + 20 + 15);
+    forwardSprite.position.set(this.startXYZ.x + 0, this.startXYZ.y - 0.5, this.startXYZ.z + 0);// + 20 + 15);
     forwardSprite.name = 'forwardSprite';
-    backwardSprite.position.set(startXYZ.x + 0, startXYZ.y - 1.5, startXYZ.z + 0);//20 + 15);
+    backwardSprite.position.set(this.startXYZ.x + 0, this.startXYZ.y - 1.5, this.startXYZ.z + 0);//20 + 15);
     backwardSprite.name = 'backwardSprite';
-    upwardSprite.position.set(startXYZ.x + 3, startXYZ.y + 0, startXYZ.z + 0);// 20 +15);
+    upwardSprite.position.set(this.startXYZ.x + 3, this.startXYZ.y + 0, this.startXYZ.z + 0);// 20 +15);
     upwardSprite.name = 'upwardSprite';
-    downwardSprite.position.set(startXYZ.x + 3, startXYZ.y - 1, startXYZ.z + 0);// 20 + 15);
+    downwardSprite.position.set(this.startXYZ.x + 3, this.startXYZ.y - 1, this.startXYZ.z + 0);// 20 + 15);
     downwardSprite.name = 'downwardSprite';
-    cameraControll.add(camera);
-    cameraControll.add(forwardSprite);
-    cameraControll.add(backwardSprite);
-    cameraControll.add(upwardSprite);
-    cameraControll.add(downwardSprite);
-    return cameraControll;
+    this.cameraControll.add(camera);//
+    this.cameraControll.add(forwardSprite);//
+    this.cameraControll.add(backwardSprite);//
+    this.cameraControll.add(upwardSprite);//
+    this.cameraControll.add(downwardSprite);//
+    return this.cameraControll;//
 }
 
-function loadOBJ(name, z, x, y, fiY){
+MapCanvas.prototype.loadOBJ = function(name, z, x, y, fiY){
+  var objectMapCanvas = this;
   var manager = new THREE.LoadingManager();
   var mtlLoader = new THREE.MTLLoader( manager );
-  mtlLoader.load(SERVER_IP + '/map/material/' + name, function(materials){
+  mtlLoader.load(this.SERVER_IP + '/map/material/' + name, function(materials){
         materials.preload();
        var loader = new THREE.OBJLoader( manager );
        loader.setMaterials(materials);
-       loader.load(SERVER_IP + '/map/object/' + name, function ( object ) {
+       loader.load(objectMapCanvas.SERVER_IP + '/map/object/' + name, function ( object ) {
            object.name = name + '_' + z + '_' + x;
-           scene.add( object );   
-           selectedObject = scene.getObjectByName(name + '_' + z + '_' + x);
-           selectedObject.rotateOnAxis( Y_AXIS, fiY );
+           objectMapCanvas.scene.add( object );   
+           selectedObject = objectMapCanvas.scene.getObjectByName(name + '_' + z + '_' + x);
+           selectedObject.rotateOnAxis( objectMapCanvas.Y_AXIS, fiY );
            xyz = new XYZ(x, y, z);
            newXYZ = xyz.getRotatedCoordinates(fiY);
            selectedObject.translateZ(newXYZ.z);
            selectedObject.translateX(newXYZ.x);
            selectedObject.translateY(newXYZ.y);
-           animate();     
+//           objectMapCanvas.animate();     
        });
  });
 
@@ -151,42 +157,40 @@ function loadOBJ(name, z, x, y, fiY){
 //z - axe direction is toward you from monitor = latitude
 //x- to the right in plane of monitor  = longetude
 //y - upright in plane of the monitor = height
-function loadSprite(name, latitude, longitude, hight) {
+MapCanvas.prototype.loadSprite = function(name, latitude, longitude, hight) {
     textureLoader = new THREE.TextureLoader();
     //var forwardSprite = new THREE.Sprite(forwardMaterialSprite);
-    currentSpriteTexture = textureLoader.load(SERVER_IP + '/map/sprite/' + name);
+    currentSpriteTexture = textureLoader.load(this.SERVER_IP + '/map/sprite/' + name);
     currentMaterialSprite = new THREE.SpriteMaterial({
         map:currentSpriteTexture, color : 0xffffff ,fog:true
     });
     currentSprite = new THREE.Sprite(currentMaterialSprite);
     currentSprite.position.set(longitude, hight, latitude);
     currentSprite.name = name + '_' + latitude + '_' + longitude;
-    //sprite.scale.set(100,100,1);
-    scene.add(currentSprite);
-    animate();
+    this.scene.add(currentSprite);
+//    this.animate();
 }
 
-function addSun(){
+MapCanvas.prototype. addSun = function(){
     // Sun
     var sun, sun_geom, sun_mat;
     sun_geom = new THREE.SphereGeometry(5, 5, 5);
     sun_mat = new THREE.MeshNormalMaterial();
     sun = new THREE.Mesh(sun_geom, sun_mat);
-    //scene.add(sun);
 }
 
-    function animate() {
-        requestAnimationFrame(animate);
-        render.render(scene, camera);
+MapCanvas.prototype.animate = function() {
+        var objectMapCanvas = this;
+        requestAnimationFrame(function(){
+          objectMapCanvas.animate();
+        });
+        this.render.render(this.scene, this.camera);
     }
 // rotation listener
 
-function init(camera, scene){
+MapCanvas.prototype.initDeviceOrientationListeners = function(camera, scene){ // mapCanvas was added
       //Find our div containers in the DOM
-      //var dataContainerOrientation = document.getElementById('dataContainerOrientation');
-      //var dataContainerMotion = document.getElementById('dataContainerMotion');
-      //var dataContainerAngle = document.getElementById('dataContainerAngle');
- 
+      var objectMapCanvas = this;
       //Check for support for DeviceOrientation event
       if(window.DeviceOrientationEvent) {
         window.addEventListener('deviceorientation', function(event) {
@@ -198,77 +202,79 @@ function init(camera, scene){
       }
  
       // Check for support for DeviceMotion events
-      if(window.DeviceMotionEvent) {
+      if(window.Device,MotionEvent) {
+
       window.addEventListener('devicemotion', function(event) {
                 var x = event.accelerationIncludingGravity.x;
                 var y = event.accelerationIncludingGravity.y;
                 var z = event.accelerationIncludingGravity.z;
                 var r = event.rotationRate;
-                checkTimePass(x,y,z,camera,scene);
+                objectMapCanvas.checkTimePass(x,y,z,camera,scene);
               });
       }
     }   
 //when TIME_DELAY pass call rerender 
-  function checkTimePass(x,y,z,camera,scene) {
+MapCanvas.prototype.checkTimePass = function(x,y,z,camera,scene) {
         //var Y_AXIS = new THREE.Vector3( 0, 1, 0 );
         var d = new Date();
         var n = d.getTime();
-        calcRotationAngle(x,y,z);
-        if(n - currentTimeMils > TIME_DELAY) {
-            currentTimeMils = n;
+        this.calcRotationAngle(x,y,z);
+        if(n - this.currentTimeMils > this.TIME_DELAY) {
+            this.currentTimeMils = n;
             //dataContainerAngle.innerHTML = html;
             // rotate camera and set rotation angle to 0
-            camera.rotateOnAxis( Y_AXIS, rotationAngleZ );
+            camera.rotateOnAxis( this.Y_AXIS, this.rotationAngleZ );
             //camera
-            rotationAngleZ = 0;
+            this.rotationAngleZ = 0;
             // lets translate camera
              // and after make translation = 0
-            currentSpeed = 0;
+            this.currentSpeed = 0;
             return true;
         }
         return false;
   }
-  function checkStartRotation(x,y,z) {
+MapCanvas.prototype.checkStartRotation = function(x,y,z) {
         if (x*x > 0.01 * (x*x + y*y + z*z)) {
             return true;
         }
         return false;
   }
-  function calcRotationAngle(x,y,z) {
+MapCanvas.prototype.calcRotationAngle = function(x,y,z) {
         var d = new Date();
         var n = d.getTime();
         if (x > 0 && checkStartRotation(x,y,z) == true) {
-            rotationAngleZ = rotationAngleZ + (n - currentTimeMils) * rotationSpeed;
-            currentAngle = currentAngle + (n - currentTimeMils) * rotationSpeed;
+            this.rotationAngleZ = this.rotationAngleZ + (n - this.currentTimeMils) * this.rotationSpeed;
+            this.currentAngle = this.currentAngle + (n - this.currentTimeMils) * this.rotationSpeed;
         }
         if (x < 0 && checkStartRotation(x,y,z) == true) {
-            rotationAngleZ = rotationAngleZ - (n - currentTimeMils) * rotationSpeed;
-            currentAngle = currentAngle - (n - currentTimeMils) * rotationSpeed;
+            this.rotationAngleZ = this.rotationAngleZ - (n - this.currentTimeMils) * this.rotationSpeed;
+            this.currentAngle = this.currentAngle - (n - this.currentTimeMils) * this.rotationSpeed;
         }
         //let's calculate camera translation
         currentPosition = new XYZ(camera.position.x, camera.position.y, camera.position.z);
-        if(mapFrame.checkToReload(currentPosition)) {
-            getObjectsListOnMap(currentPosition.x, currentPosition.z, currentPosition.y);
-            resetCenterPosition(cameraControll);
+        if(this.mapFrame.checkToReload(currentPosition)) {
+            this.getObjectsListOnMap(currentPosition.x, currentPosition.z, currentPosition.y);
+            this.resetCenterPosition(this.cameraControll);//
         }
    }
-  function resetCenterPosition(cameraControll) {
-            xyzCenter.x = cameraControll.position.x;
-            xyzCenter.y = cameraControll.position.y;
-            xyzCenter.z = cameraControll.position.z;
+MapCanvas.prototype.resetCenterPosition = function(cameraControll) {
+            this.xyzCenter.x = cameraControll.position.x;//
+            this.xyzCenter.y = cameraControll.position.y;//
+            this.xyzCenter.z = cameraControll.position.z;//
   }
 // calculate module of translation in current direction
-  function calcTranslation(aX) {
+MapCanvas.prototype.calcTranslation = function(aX) {
         var d = new Date();
         var n = d.getTime();
-        var displacement = currentSpeed * (n - currentTimeMils) / 1000;
-        currentSpeed = currentSpeed + aX * (n - currentTimeMils) / 1000;
+        var displacement = this.currentSpeed * (n - this.currentTimeMils) / 1000;
+        this.currentSpeed = this.currentSpeed + aX * (n - this.currentTimeMils) / 1000;
 	return displacement;
   }
 
-  function getObjectsListOnMap(longetude, lattitude, h) {
+MapCanvas.prototype.getObjectsListOnMap = function(longetude, lattitude, h) {
+      var objectMapCanvas = this;
       //urlRequest = url + '/map/' + z + '/' + lattitude +'/' + longetude;
-      urlRequest = url + '/map/' + h + '/' + lattitude +'/' + longetude;
+      urlRequest = this.SERVER_IP + '/map/' + h + '/' + lattitude +'/' + longetude;
       $.get(urlRequest, function(data, status){
           // get all appropriate objects to be placed on scene
           objectsList = new ObjectsList(data);
@@ -280,31 +286,31 @@ function init(camera, scene){
           while(data.length > 0){
               objectOnMap = objectsList.getObject();
               //check if the object has been allready loaded
-              if (objectsListOnScene.includes(objectOnMap.name + '_' + objectOnMap.latitude + '_' + objectOnMap.longitude) == false){
+              if (objectMapCanvas.objectsListOnScene.includes(objectOnMap.name + '_' + objectOnMap.latitude + '_' + objectOnMap.longitude) == false){
                   if (objectOnMap.type =='SPRITE') {
-                      loadSprite(objectOnMap.name, objectOnMap.latitude, objectOnMap.longitude, objectOnMap.hight);
+                      objectMapCanvas.loadSprite(objectOnMap.name, objectOnMap.latitude, objectOnMap.longitude, objectOnMap.hight);
                   } else {
-                      loadOBJ(objectOnMap.name, objectOnMap.latitude, objectOnMap.longitude, objectOnMap.hight, objectOnMap.alphaZ);
+                      objectMapCanvas.loadOBJ(objectOnMap.name, objectOnMap.latitude, objectOnMap.longitude, objectOnMap.hight, objectOnMap.alphaZ);
                   }
                   
                   // add loaded object to the list
-                  objectsListOnScene.push(objectOnMap.name + '_' + objectOnMap.latitude + '_' + objectOnMap.longitude);
+                  objectMapCanvas.objectsListOnScene.push(objectOnMap.name + '_' + objectOnMap.latitude + '_' + objectOnMap.longitude);
               }
               
           }
-          objectsToDelete = getListToDelete(objectsListOnScene, objectNamesFromServer);
+          objectsToDelete = objectMapCanvas.getListToDelete(objectMapCanvas.objectsListOnScene, objectNamesFromServer);
           while(objectsToDelete.length > 0) {
               objectNameToBeDeleted = objectsToDelete.pop();
-              objectToDelete = scene.getObjectByName(objectNameToBeDeleted);
-              scene.remove( objectToDelete );
+              objectToDelete = objectMapCanvas.scene.getObjectByName(objectNameToBeDeleted);
+              objectMapCanvas.objectMapCanvas.scene.remove( objectToDelete );
               //remove from objectsListOnScene objects to delete
-              removeByValue(objectsListOnScene, objectNameToBeDeleted)
+              objectMapCanvas.removeByValue(objectMapCanvas.objectsListOnScene, objectNameToBeDeleted)
           }
-          animate();
+          //objectMapCanvas.animate();
       });
   }
 
-  function getListToDelete(objectsOnScene, objectNamesFromServer) {
+ MapCanvas.prototype.getListToDelete = function(objectsOnScene, objectNamesFromServer) {
       objectsToDelete = new Array();
       for(i = 0; i < objectsOnScene.length; i = i + 1) {
           exists = false;
@@ -318,7 +324,7 @@ function init(camera, scene){
       return objectsToDelete;
   }
 
-  function removeByValue(arr, val) {
+MapCanvas.prototype.removeByValue = function(arr, val) {
       for( var i = 0; i < arr.length; i++){ 
           if ( arr[i] == val) {
               arr.splice(i, 1); 
@@ -326,68 +332,72 @@ function init(camera, scene){
       }
   }
 
-  function checkForNavigationButtonPressed(x, y, wW, wH) {
+MapCanvas.prototype.checkForNavigationButtonPressed = function(x, y, wW, wH) {
       if (x/wW > 216 / 536 && x/wW < 338 / 536 && y/wH > 390 / 672 && y/wH < 483 / 672) {
-          cameraControll.translateZ(-1 * scale);
+          this.cameraControll.translateZ(-1 * this.scale);
           //animate();
       }
       if (x/wW > 216 / 536 && x/wW < 338 / 536 && y/wH > 520 / 672 && y/wH < 648 / 672) {
-          cameraControll.translateZ(1 * scale);
+          this.cameraControll.translateZ(1 * this.scale);
           //animate();
       }
       if (x/wW > 400 / 536 && x/wW < 480 / 536 && y/wH > 290 / 672 && y/wH < 383 / 672) {
-          if (validateHeight(1 * scale)) {
-              cameraControll.translateY(1 * scale);
+          if (this.validateHeight(1 * this.scale)) {
+              this.cameraControll.translateY(1 * this.scale);
           }
 
           //animate();
       }
       if (x/wW > 400 / 536 && x/wW < 480 / 536 && y/wH > 400 / 672 && y/wH < 528 / 672) {
-          if (validateHeight(-1 * scale)) {
-              cameraControll.translateY(-1 * scale);
+          if (this.validateHeight(-1 * this.scale)) {
+              this.cameraControll.translateY(-1 * this.scale);
           }
           //animate();
       }
+      //this.animate();
   }
 
-  function validateHeight(delta) {
-      if(cameraControll.position.y + delta > 0) {
+MapCanvas.prototype.validateHeight = function(delta) {
+      if(this.cameraControll.position.y + delta > 0) {
           return true;
       }
       return false;
   }
 
-  function startTrack(event) {
-      checkForNavigationButtonPressed(event.clientX, event.clientY, W, H)
-      xDwn = event.clientX;
-      yDwn = event.clientY;
+MapCanvas.prototype.startTrack = function(event) {
+      this.checkForNavigationButtonPressed(event.clientX, event.clientY, this.W, this.H)
+      this.xDwn = event.clientX;
+      this.yDwn = event.clientY;
   }
 
-  function endTrack(event) {
-      delta = (yDwn - event.clientY);
-      delta = delta * scale / 100;
-      angle = (xDwn - event.clientX) / 400;
+MapCanvas.prototype.endTrack = function(event) {
+      delta = (this.yDwn - event.clientY);
+      delta = delta * this.scale / 100;
+      angle = (this.xDwn - event.clientX) / 400;
 //new version cameraControll
-      cameraControll.rotateOnAxis( Y_AXIS, angle );
-      cameraControll.translateZ(-delta);
+      this.cameraControll.rotateOnAxis( this.Y_AXIS, angle);
+      this.cameraControll.translateZ(-delta);
       //animate();
-      checkForReload();
+      this.checkForReload();
   }
 //TODO here we are checking for reloading and if ok move xyzCenter
-  function checkForReload(){
+MapCanvas.prototype.checkForReload = function(){
         //TODO check if it is a good practice to create a new object each time!!!!
-        currentPosition = new XYZ(cameraControll.position.x, cameraControll.position.y, cameraControll.position.z);
-        if(mapFrame.checkToReload(currentPosition)) {
+        currentPosition = new XYZ(this.cameraControll.position.x, this.cameraControll.position.y, this.cameraControll.position.z);
+        if(this.mapFrame.checkToReload(currentPosition)) {
 
-            getObjectsListOnMap(currentPosition.x, currentPosition.z, currentPosition.y);
-            resetCenterPosition(cameraControll);
+            this.getObjectsListOnMap(currentPosition.x, currentPosition.z, currentPosition.y);
+            this.resetCenterPosition(this.cameraControll);
         }        
-        currentPosition = new XYZ(cameraControll.position.x, cameraControll.position.y, cameraControll.position.z);
-  }
-MapCanvas.prototype.reloadLocatorPosition = function(x,z) {
-            cameraControll.position.x = x;
-            cameraControll.position.z = z;    
-  }
+        currentPosition = new XYZ(this.cameraControll.position.x, this.cameraControll.position.y, this.cameraControll.position.z);
 }
+
+MapCanvas.prototype.reloadLocatorPosition = function(x,z,alpha) {
+            this.cameraControll.position.x = x;
+            this.cameraControll.position.z = z;
+            var ROTATION_AXIS = new THREE.Vector3( 0, 1, 0 );
+            this.cameraControll.rotateOnAxis( ROTATION_AXIS, alpha);    
+}
+
 
 
