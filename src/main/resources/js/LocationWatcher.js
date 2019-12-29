@@ -21,11 +21,12 @@ LocationWatcher.prototype.checkPosition = function(position) {
     if ((x - position.coords.longitude) * (x - position.coords.longitude) 
     + (z - position.coords.latitude) * (z - position.coords.latitude) >
        r * r) {
+        angle = this.getAngle(position);
         this.centerXYZ.x = position.coords.longitude;
         this.centerXYZ.z = position.coords.latitude;
         //transformator
         xyz = this.transformator.calcXYZ(position.coords.longitude, 1, position.coords.latitude);
-        this.mapCanvas.reloadLocatorPosition(xyz.x,xyz.z, this.getAngle(position));
+        this.mapCanvas.reloadLocatorPosition(xyz.x,xyz.z, angle);
     }
 }
 
