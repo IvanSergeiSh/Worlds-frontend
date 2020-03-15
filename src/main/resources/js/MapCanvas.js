@@ -302,7 +302,8 @@ MapCanvas.prototype.getObjectsListOnMap = function(longetude, lattitude, h) {
           while(objectsToDelete.length > 0) {
               objectNameToBeDeleted = objectsToDelete.pop();
               objectToDelete = objectMapCanvas.scene.getObjectByName(objectNameToBeDeleted);
-              objectMapCanvas.objectMapCanvas.scene.remove( objectToDelete );
+              //objectMapCanvas.objectMapCanvas.scene.remove( objectToDelete );
+              objectMapCanvas.scene.remove( objectToDelete );
               //remove from objectsListOnScene objects to delete
               objectMapCanvas.removeByValue(objectMapCanvas.objectsListOnScene, objectNameToBeDeleted)
           }
