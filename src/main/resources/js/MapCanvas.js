@@ -34,7 +34,50 @@ function MapCanvas(SERVER_IP, TIME_DELAY, rotationSpeed, scaleOfDisplacement, st
   this.camera = new THREE.PerspectiveCamera(45, this.W / this.H, 1, 10000);
   this.container = document.createElement('div');
   this.render = new THREE.WebGLRenderer();
+  this.effectListener = new EffectListener(); // Is intended to process custom object types.
+}
 
+function MapCanvas(SERVER_IP, TIME_DELAY, rotationSpeed, scaleOfDisplacement, startXYZ, radiusOfReloading, effectListener){
+    this.SERVER_IP = SERVER_IP;
+    this.TIME_DELAY = TIME_DELAY;
+    this.rotationSpeed = rotationSpeed;
+    // scale = 1 - default value scale of translation
+    // displacement = displacement * scale
+    this.scale = scaleOfDisplacement;
+    this.startXYZ = startXYZ;
+    this.radiusOfReloading = radiusOfReloading;
+    this.cameraControll = new THREE.Group();
+    this.currentAngle = 0; 
+    var currentDate = new Date();
+    this.currentTimeMils = currentDate.getTime();
+    this.rotationAngleZ = 0;
+    this.Y_AXIS = new THREE.Vector3( 0, 1, 0 );
+    //on mousedown
+    this.xDwn = 0;
+    this.yDwn = 0;
+    //add initial center
+    this.xyzCenter = this.startXYZ;
+//map frame
+  this.mapFrame = new MapFrame(this.xyzCenter, this.radiusOfReloading);
+//add list of objects
+  this.objectsListOnScene = new Array();
+//add raycaster
+  var raycaster = new THREE.Raycaster();
+  var mouse = new THREE.Vector2();
+
+  this.currentSpeed = 0;
+  var url = SERVER_IP;
+  this.scene = new THREE.Scene();
+  this.W = parseInt(window.innerWidth);
+  this.H = parseInt(window.innerHeight);
+  this.camera = new THREE.PerspectiveCamera(45, this.W / this.H, 1, 10000);
+  this.container = document.createElement('div');
+  this.render = new THREE.WebGLRenderer();
+  if (effectListener == null) {
+	  this.effectListener = new EffectListener(); // The default version do nothing!
+  } else {
+	  this.effectListener = effectListener; // Is intended to process custom object types.
+  }
 }
 
 MapCanvas.prototype.init = function() {
@@ -171,6 +214,14 @@ MapCanvas.prototype.loadSprite = function(name, latitude, longitude, hight) {
 //    this.animate();
 }
 
+/**
+ * This method calls a defined effectListener to process custom object type.
+ * See getObjectsListOnMap(...)
+ */
+MapCanvas.prototype.loadCustomObject = function(name, type) {
+	this.effectListener.process(name, type, this);
+}
+
 MapCanvas.prototype. addSun = function(){
     // Sun
     var sun, sun_geom, sun_mat;
@@ -285,9 +336,11 @@ MapCanvas.prototype.getObjectsListOnMap = function(longetude, lattitude, h) {
           }
           while(data.length > 0){
               objectOnMap = objectsList.getObject();
-              //check if the object has been allready loaded
+              //check if the object has been already loaded
               if (objectMapCanvas.objectsListOnScene.includes(objectOnMap.name + '_' + objectOnMap.latitude + '_' + objectOnMap.longitude) == false){
-                  if (objectOnMap.type =='SPRITE') {
+            	  if (objectOnMap.type != 'SPRITE' && objectOnMap.type != 'THREE_D_OBJECT') {
+            		  objectMapCanvas.loadCustomObject(objectOnMap.name, objectOnMap.type);
+            	  } else if (objectOnMap.type =='SPRITE') {
                       objectMapCanvas.loadSprite(objectOnMap.name, objectOnMap.latitude, objectOnMap.longitude, objectOnMap.hight);
                   } else {
                       objectMapCanvas.loadOBJ(objectOnMap.name, objectOnMap.latitude, objectOnMap.longitude, objectOnMap.hight, objectOnMap.alphaZ);
