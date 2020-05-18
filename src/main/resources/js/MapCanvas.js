@@ -22,6 +22,7 @@ function MapCanvas(SERVER_IP, TIME_DELAY, rotationSpeed, scaleOfDisplacement, st
   this.mapFrame = new MapFrame(this.xyzCenter, this.radiusOfReloading);
 //add list of objects
   this.objectsListOnScene = new Array();
+  this.customObjectsOnScene = new Array(); // This list contains those custom objects which were added.
 //add raycaster
   var raycaster = new THREE.Raycaster();
   var mouse = new THREE.Vector2();
@@ -33,6 +34,7 @@ function MapCanvas(SERVER_IP, TIME_DELAY, rotationSpeed, scaleOfDisplacement, st
   this.H = parseInt(window.innerHeight);
   this.camera = new THREE.PerspectiveCamera(45, this.W / this.H, 1, 10000);
   this.container = document.createElement('div');
+  this.container.setAttribute("id", "div-canvas");
   this.render = new THREE.WebGLRenderer();
   this.effectListener = new EffectListener(); // Is intended to process custom object types.
 }
@@ -61,6 +63,7 @@ function MapCanvas(SERVER_IP, TIME_DELAY, rotationSpeed, scaleOfDisplacement, st
   this.mapFrame = new MapFrame(this.xyzCenter, this.radiusOfReloading);
 //add list of objects
   this.objectsListOnScene = new Array();
+  this.customObjectsOnScene = new Array(); // This list contains those custom objects which were added.
 //add raycaster
   var raycaster = new THREE.Raycaster();
   var mouse = new THREE.Vector2();
@@ -72,6 +75,7 @@ function MapCanvas(SERVER_IP, TIME_DELAY, rotationSpeed, scaleOfDisplacement, st
   this.H = parseInt(window.innerHeight);
   this.camera = new THREE.PerspectiveCamera(45, this.W / this.H, 1, 10000);
   this.container = document.createElement('div');
+  this.container.setAttribute("id", "div-canvas");
   this.render = new THREE.WebGLRenderer();
   if (effectListener == null) {
 	  this.effectListener = new EffectListener(); // The default version do nothing!
@@ -218,8 +222,8 @@ MapCanvas.prototype.loadSprite = function(name, latitude, longitude, hight) {
  * This method calls a defined effectListener to process custom object type.
  * See getObjectsListOnMap(...)
  */
-MapCanvas.prototype.loadCustomObject = function(name, type) {
-	this.effectListener.process(name, type, this);
+MapCanvas.prototype.loadCustomObject = function(name, type, latitude, longitude, hight) {
+	this.effectListener.process(name, type, latitude, longitude, hight, this);
 }
 
 MapCanvas.prototype. addSun = function(){
@@ -322,6 +326,28 @@ MapCanvas.prototype.calcTranslation = function(aX) {
 	return displacement;
   }
 
+/**
+ * IE11 doesn't support array.includes().
+ */
+MapCanvas.prototype.contains = function (arr, val, comparator) {
+	for (var i = 0; i < arr.length; i = i + 1) {
+		if (comparator(arr[i], val)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+MapCanvas.prototype.objectComparator = function (o1, o2) {
+	if(o1.name == o2.name && o1.type == o2.type &&
+   		 o1.latitude == o2.latitude &&
+   		 o1.longitude == o2.longitude && o1.hight == o2.hight) { 
+        return true;
+    } else {
+    	return false;
+    }
+}
+
 MapCanvas.prototype.getObjectsListOnMap = function(longetude, lattitude, h) {
       var objectMapCanvas = this;
       //urlRequest = url + '/map/' + z + '/' + lattitude +'/' + longetude;
@@ -331,23 +357,33 @@ MapCanvas.prototype.getObjectsListOnMap = function(longetude, lattitude, h) {
           objectsList = new ObjectsList(data);
           //let's load objects from server
           objectNamesFromServer = new Array();
-          for(i=0; i< data.length; i = i + 1){
-              objectNamesFromServer.push(data[i].name +'_' + data[i].latitude + '_' + data[i].longitude);
+          customObjectList = new Array();
+          for(var i=0; i< data.length; i = i + 1){
+        	  if (data[i].type == 'SPRITE' || data[i].type == 'THREE_D_OBJECT') {
+        		  objectNamesFromServer.push(data[i].name +'_' + data[i].latitude + '_' + data[i].longitude);
+        	  } else {
+        		  customObjectList.push(data[i]);// FORM LIST OF CUSTOM OBJECT LOADED FROM SERVER.
+        	  }
           }
           while(data.length > 0){
               objectOnMap = objectsList.getObject();
               //check if the object has been already loaded
               if (objectMapCanvas.objectsListOnScene.includes(objectOnMap.name + '_' + objectOnMap.latitude + '_' + objectOnMap.longitude) == false){
             	  if (objectOnMap.type != 'SPRITE' && objectOnMap.type != 'THREE_D_OBJECT') {
-            		  objectMapCanvas.loadCustomObject(objectOnMap.name, objectOnMap.type);
-            	  } else if (objectOnMap.type =='SPRITE') {
-                      objectMapCanvas.loadSprite(objectOnMap.name, objectOnMap.latitude, objectOnMap.longitude, objectOnMap.hight);
-                  } else {
-                      objectMapCanvas.loadOBJ(objectOnMap.name, objectOnMap.latitude, objectOnMap.longitude, objectOnMap.hight, objectOnMap.alphaZ);
-                  }
-                  
-                  // add loaded object to the list
-                  objectMapCanvas.objectsListOnScene.push(objectOnMap.name + '_' + objectOnMap.latitude + '_' + objectOnMap.longitude);
+            		  if (!objectMapCanvas.contains(objectMapCanvas.customObjectsOnScene, objectOnMap, objectMapCanvas.objectComparator)) {
+	            		  objectMapCanvas.loadCustomObject(objectOnMap.name, objectOnMap.type, objectOnMap.latitude, objectOnMap.longitude, objectOnMap.hight);
+	            		  // Add custom objects to a list it was added yet!
+	            		  objectMapCanvas.customObjectsOnScene.push(objectOnMap);
+            		  }
+            	  } else {
+            		  if (objectOnMap.type =='SPRITE') {
+	                      objectMapCanvas.loadSprite(objectOnMap.name, objectOnMap.latitude, objectOnMap.longitude, objectOnMap.hight);
+	                  } else {
+	                      objectMapCanvas.loadOBJ(objectOnMap.name, objectOnMap.latitude, objectOnMap.longitude, objectOnMap.hight, objectOnMap.alphaZ);
+	                  }	                  
+	                  // add loaded object to the list
+	                  objectMapCanvas.objectsListOnScene.push(objectOnMap.name + '_' + objectOnMap.latitude + '_' + objectOnMap.longitude);
+            	  }
               }
               
           }
@@ -360,13 +396,34 @@ MapCanvas.prototype.getObjectsListOnMap = function(longetude, lattitude, h) {
               //remove from objectsListOnScene objects to delete
               objectMapCanvas.removeByValue(objectMapCanvas.objectsListOnScene, objectNameToBeDeleted)
           }
+          objectMapCanvas.removeCustomObjects(objectMapCanvas.customObjectsOnScene, customObjectList); // remove custom objects.
           //objectMapCanvas.animate();
       });
   }
 
+ MapCanvas.prototype.removeCustomObjects = function (objectsOnScene, newObjects) {
+	 objectsToDelete = new Array();
+	 for(var i = 0; i < objectsOnScene.length; i = i + 1) {
+		 exists = false;
+		 for(var j = 0; j < newObjects.length; j = j + 1) {
+			 if (this.objectComparator(objectsOnScene[i], newObjects[j])) {
+                 exists = true;
+             }
+         }
+		 if (exists == false) {
+			 objectsToDelete.push(objectsOnScene[i]);
+		 }
+	 }
+	 while(objectsToDelete.length > 0) {
+         objectToBeDeleted = objectsToDelete.pop();
+         this.effectListener.remove(objectToBeDeleted.name, objectToBeDeleted.type, objectToBeDeleted.latitude, objectToBeDeleted.longitude, objectToBeDeleted.hight, this);
+         this.removeByValue(objectsOnScene, objectToBeDeleted); // Remove from income list.
+     }
+ }
+
  MapCanvas.prototype.getListToDelete = function(objectsOnScene, objectNamesFromServer) {
       objectsToDelete = new Array();
-      for(i = 0; i < objectsOnScene.length; i = i + 1) {
+      for(var i = 0; i < objectsOnScene.length; i = i + 1) {
           exists = false;
           for(j = 0; j < objectNamesFromServer.length; j = j + 1) {
               if(objectsOnScene[i] == objectNamesFromServer[j]) { 
