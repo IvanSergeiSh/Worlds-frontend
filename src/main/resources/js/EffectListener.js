@@ -18,9 +18,9 @@ function EffectListener () {
  * MapCanvas.customObjectsOnScene - contains a list of custom objects which were already added to a scene,
  * incoming object will be added to the list after execution of this function.
  */
-EffectListener.prototype.process = function (name, type, latitude, longitude, hight, mapCanvas) {
+EffectListener.prototype.process = function (objectOnMap, mapCanvas) {
 	// Override this method.
-	message = "name: " + name + ", type: " + type;
+	message = "name: " + objectOnMap.name + ", type: " + objectOnMap.type;
 	console.log(message);
 }
 

@@ -222,8 +222,8 @@ MapCanvas.prototype.loadSprite = function(name, latitude, longitude, hight) {
  * This method calls a defined effectListener to process custom object type.
  * See getObjectsListOnMap(...)
  */
-MapCanvas.prototype.loadCustomObject = function(name, type, latitude, longitude, hight) {
-	this.effectListener.process(name, type, latitude, longitude, hight, this);
+MapCanvas.prototype.loadCustomObject = function(objectOnMap) {
+	this.effectListener.process(objectOnMap, this);
 }
 
 MapCanvas.prototype. addSun = function(){
@@ -371,7 +371,7 @@ MapCanvas.prototype.getObjectsListOnMap = function(longetude, lattitude, h) {
               if (objectMapCanvas.objectsListOnScene.includes(objectOnMap.name + '_' + objectOnMap.latitude + '_' + objectOnMap.longitude) == false){
             	  if (objectOnMap.type != 'SPRITE' && objectOnMap.type != 'THREE_D_OBJECT') {
             		  if (!objectMapCanvas.contains(objectMapCanvas.customObjectsOnScene, objectOnMap, objectMapCanvas.objectComparator)) {
-	            		  objectMapCanvas.loadCustomObject(objectOnMap.name, objectOnMap.type, objectOnMap.latitude, objectOnMap.longitude, objectOnMap.hight);
+	            		  objectMapCanvas.loadCustomObject(objectOnMap);
 	            		  // Add custom objects to a list it was added yet!
 	            		  objectMapCanvas.customObjectsOnScene.push(objectOnMap);
             		  }
